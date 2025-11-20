@@ -1,43 +1,49 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Moon, Sun } from 'lucide-react';
 
 export default function ThemeToggle() {
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const savedTheme = localStorage.getItem('theme');
-      const isCurrentlyDark = savedTheme === 'dark' || document.documentElement.classList.contains('dark');
-      if (isCurrentlyDark) {
-        document.documentElement.classList.add('dark');
-      }
-      return isCurrentlyDark;
-    }
-    return false;
-  });
+  const [mounted, setMounted] = useState(false);
+  const [isDark, setIsDark] = useState(false);
 
-  const toggleTheme = () => {
+  useEffect(() => {
+    setMounted(true);
+    const savedTheme = localStorage.getItem('theme');
+    const shouldBeDark = savedTheme === 'dark';
+    setIsDark(shouldBeDark);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    
     if (isDark) {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-      setIsDark(false);
-    } else {
       document.documentElement.classList.add('dark');
       localStorage.setItem('theme', 'dark');
-      setIsDark(true);
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
     }
+  }, [isDark, mounted]);
+
+  const toggle = () => {
+    setIsDark(!isDark);
   };
+
+  if (!mounted) {
+    return <div className="w-10 h-10" />;
+  }
 
   return (
     <button
-      onClick={toggleTheme}
-      className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+      onClick={toggle}
+      className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors duration-200"
       aria-label="Toggle theme"
     >
       {isDark ? (
-        <Sun size={20} className="text-yellow-500" />
+        <Sun size={20} className="text-yellow-400" />
       ) : (
-        <Moon size={20} className="text-gray-700 dark:text-gray-300" />
+        <Moon size={20} className="text-gray-600 dark:text-gray-400" />
       )}
     </button>
   );

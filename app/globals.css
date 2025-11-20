@@ -1,16 +1,24 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@layer base {
+  :root {
+    --background: 255 255 255;
+    --foreground: 23 23 23;
+  }
+
+  .dark {
+    --background: 0 0 0;
+    --foreground: 255 255 255;
+  }
 }
 
-.dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+html {
+  background-color: rgb(var(--background));
+  color: rgb(var(--foreground));
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
+  background-color: rgb(var(--background));
+  color: rgb(var(--foreground));
+  transition: background-color 0.2s ease, color 0.2s ease;
 }

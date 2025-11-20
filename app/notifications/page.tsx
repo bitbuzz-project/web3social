@@ -3,6 +3,7 @@
 import { useAccount } from 'wagmi';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import FeedNavigation from '@/components/FeedNavigation';
 import { Heart, MessageCircle, UserPlus, Repeat } from 'lucide-react';
 
 export default function NotificationsPage() {
@@ -15,9 +16,7 @@ export default function NotificationsPage() {
     }
   }, [isConnected, router]);
 
-  if (!isConnected) {
-    return null;
-  }
+  if (!isConnected) return null;
 
   const notifications = [
     {
@@ -47,59 +46,50 @@ export default function NotificationsPage() {
       icon: UserPlus,
       color: 'text-green-500',
     },
-    {
-      id: 4,
-      type: 'repost',
-      user: '0xdef0...abc9',
-      action: 'shared your post',
-      time: '2 days ago',
-      icon: Repeat,
-      color: 'text-purple-500',
-    },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
-        <div className="bg-white rounded-lg shadow">
+    <div className="min-h-screen bg-white dark:bg-black">
+      <div className="max-w-[1280px] mx-auto flex">
+        {/* Left Sidebar */}
+        <div className="w-[68px] xl:w-[275px] flex-shrink-0">
+          <div className="fixed w-[68px] xl:w-[275px] h-screen border-r border-gray-200 dark:border-gray-800">
+            <FeedNavigation />
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 min-h-screen border-x border-gray-200 dark:border-gray-800">
           {/* Header */}
-          <div className="p-6 border-b border-gray-200">
-            <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
+          <div className="sticky top-0 z-10 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 px-4 py-3">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Notifications</h1>
           </div>
 
           {/* Notifications List */}
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-gray-200 dark:divide-gray-800">
             {notifications.map((notification) => {
               const Icon = notification.icon;
               return (
                 <div
                   key={notification.id}
-                  className="p-6 hover:bg-gray-50 cursor-pointer transition"
+                  className="px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-900/30 cursor-pointer transition"
                 >
-                  <div className="flex items-start gap-4">
-                    <div className={`p-2 rounded-full bg-gray-100 ${notification.color}`}>
+                  <div className="flex items-start gap-3">
+                    <div className={`p-2 rounded-full bg-gray-100 dark:bg-gray-800 ${notification.color}`}>
                       <Icon size={20} />
                     </div>
                     <div className="flex-1">
-                      <p className="text-gray-800">
-                        <span className="font-semibold">{notification.user}</span>{' '}
+                      <p className="text-gray-900 dark:text-white">
+                        <span className="font-bold">{notification.user}</span>{' '}
                         {notification.action}
                       </p>
-                      <p className="text-sm text-gray-500 mt-1">{notification.time}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{notification.time}</p>
                     </div>
                   </div>
                 </div>
               );
             })}
           </div>
-
-          {/* Empty State (if no notifications) */}
-          {notifications.length === 0 && (
-            <div className="p-12 text-center text-gray-500">
-              <p className="text-lg">No notifications yet</p>
-              <p className="text-sm mt-2">When someone interacts with you, you ll see it here</p>
-            </div>
-          )}
         </div>
       </div>
     </div>

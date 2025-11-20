@@ -58,21 +58,21 @@ export const REWARD_SYSTEM_CONTRACT = {
     },
     {
       "inputs": [],
-      "name": "likeReward",
+      "name": "baseLikeReward",
       "outputs": [{"internalType": "uint256","name": "","type": "uint256"}],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [],
-      "name": "commentReward",
+      "name": "baseCommentReward",
       "outputs": [{"internalType": "uint256","name": "","type": "uint256"}],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [],
-      "name": "postReward",
+      "name": "basePostReward",
       "outputs": [{"internalType": "uint256","name": "","type": "uint256"}],
       "stateMutability": "view",
       "type": "function"

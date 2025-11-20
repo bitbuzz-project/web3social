@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
-import Navbar from "@/components/Navbar";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,7 +17,34 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className} suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                function getTheme() {
+                  const saved = localStorage.getItem('theme');
+                  if (saved) return saved;
+                  
+                  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  return prefersDark ? 'dark' : 'light';
+                }
+                
+                const theme = getTheme();
+                
+                if (theme === 'dark') {
+                  document.documentElement.classList.add('dark');
+                } else {
+                  document.documentElement.classList.remove('dark');
+                }
+                
+                localStorage.setItem('theme', theme);
+              })();
+            `,
+          }}
+        />
+      </head>
+      <body className={`${inter.className} bg-white dark:bg-black text-gray-900 dark:text-white`} suppressHydrationWarning>
         <Providers>
           {children}
         </Providers>
