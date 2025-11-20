@@ -1,5 +1,5 @@
 export const SOCIAL_MEDIA_CONTRACT = {
-  address: '0x1649Cca8DbC84625c995Ae07d111BCA830aAA4A2' as `0x${string}`,
+  address: '0x2F0E68e0a85352dAcA35F030E9C04c0a319024B2' as `0x${string}`,
   abi: [
     {
       "anonymous": false,
