@@ -41,3 +41,16 @@ export async function getFromIPFS(hash: string) {
     throw error;
   }
 }
+
+export function extractImageFromContent(content: string): { text: string; imageUrl: string | null } {
+  const imageRegex = /\[IMAGE\](.*?)\[\/IMAGE\]/;
+  const match = content.match(imageRegex);
+  
+  if (match) {
+    const imageUrl = match[1];
+    const text = content.replace(imageRegex, '').trim();
+    return { text, imageUrl };
+  }
+  
+  return { text: content, imageUrl: null };
+}

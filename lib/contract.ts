@@ -1,6 +1,43 @@
 export const SOCIAL_MEDIA_CONTRACT = {
-  address: '0x2F0E68e0a85352dAcA35F030E9C04c0a319024B2' as `0x${string}`,
+  address: '0x44B5fcD182F5C457c9c1d14Dcf64EC4d96ED854D' as `0x${string}`,
   abi: [
+    // Add these to the abi array in SOCIAL_MEDIA_CONTRACT
+{
+  "inputs": [
+    {"internalType": "uint256", "name": "_postId", "type": "uint256"},
+    {"internalType": "string", "name": "_contentHash", "type": "string"}
+  ],
+  "name": "addComment",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+},
+{
+  "inputs": [{"internalType": "uint256", "name": "_postId", "type": "uint256"}],
+  "name": "getComments",
+  "outputs": [{
+    "components": [
+      {"internalType": "uint256", "name": "id", "type": "uint256"},
+      {"internalType": "uint256", "name": "postId", "type": "uint256"},
+      {"internalType": "address", "name": "author", "type": "address"},
+      {"internalType": "string", "name": "contentHash", "type": "string"},
+      {"internalType": "uint256", "name": "timestamp", "type": "uint256"},
+      {"internalType": "bool", "name": "isDeleted", "type": "bool"}
+    ],
+    "internalType": "struct SocialMedia.Comment[]",
+    "name": "",
+    "type": "tuple[]"
+  }],
+  "stateMutability": "view",
+  "type": "function"
+},
+{
+  "inputs": [{"internalType": "uint256", "name": "_postId", "type": "uint256"}],
+  "name": "getCommentCount",
+  "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+  "stateMutability": "view",
+  "type": "function"
+},
     {
       "anonymous": false,
       "inputs": [

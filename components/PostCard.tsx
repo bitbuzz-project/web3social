@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useAccount, useReadContract } from 'wagmi';
 import { useRouter } from 'next/navigation';
-import { getFromIPFS } from '@/lib/ipfs';
+import { getFromIPFS, extractImageFromContent } from '@/lib/ipfs';
 import { SOCIAL_MEDIA_CONTRACT } from '@/lib/contract';
 import { useLikePost } from '@/hooks/useLikePost';
+import TextWithHashtags from './TextWithHashtags';
 import { Heart, MessageCircle, Repeat2, Share, MoreHorizontal, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -19,6 +20,7 @@ interface PostCardProps {
 
 export default function PostCard({ postId, author, contentHash, timestamp, likes }: PostCardProps) {
   const [content, setContent] = useState('Loading...');
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const { address } = useAccount();
   const router = useRouter();
   const { likePost, unlikePost, isLoading: likeLoading } = useLikePost();
@@ -39,11 +41,20 @@ export default function PostCard({ postId, author, contentHash, timestamp, likes
     args: [author as `0x${string}`],
   });
 
+  const { data: commentCount } = useReadContract({
+    address: SOCIAL_MEDIA_CONTRACT.address,
+    abi: SOCIAL_MEDIA_CONTRACT.abi,
+    functionName: 'getCommentCount',
+    args: [BigInt(postId)],
+  });
+
   useEffect(() => {
     const fetchContent = async () => {
       try {
         const text = await getFromIPFS(contentHash);
-        setContent(text);
+        const { text: postText, imageUrl: extractedImage } = extractImageFromContent(text);
+        setContent(postText);
+        setImageUrl(extractedImage);
       } catch (error) {
         console.error('Error fetching content:', error);
         setContent('Failed to load content');
@@ -52,7 +63,8 @@ export default function PostCard({ postId, author, contentHash, timestamp, likes
     fetchContent();
   }, [contentHash]);
 
-  const handleLikeToggle = () => {
+  const handleLikeToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (hasLiked) {
       unlikePost(postId);
     } else {
@@ -61,7 +73,8 @@ export default function PostCard({ postId, author, contentHash, timestamp, likes
     setTimeout(() => refetchLike(), 2000);
   };
 
-  const handleProfileClick = () => {
+  const handleProfileClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (isOwnPost) {
       router.push('/profile');
     } else {
@@ -69,10 +82,18 @@ export default function PostCard({ postId, author, contentHash, timestamp, likes
     }
   };
 
+  const handlePostClick = () => {
+    router.push(`/post/${postId}`);
+  };
+
   const username = profile?.username || `user_${author?.slice(-4)}`;
+  const totalComments = commentCount ? Number(commentCount) : 0;
 
   return (
-    <article className="px-4 py-3 border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900/30 transition cursor-pointer">
+    <article 
+      onClick={handlePostClick}
+      className="px-4 py-3 border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900/30 transition cursor-pointer"
+    >
       <div className="flex gap-3">
         {/* Avatar */}
         <div 
@@ -101,26 +122,50 @@ export default function PostCard({ postId, author, contentHash, timestamp, likes
                 {formatDistanceToNow(new Date(timestamp * 1000), { addSuffix: true })}
               </span>
             </div>
-            <button className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full transition flex-shrink-0">
+            <button 
+              onClick={(e) => e.stopPropagation()}
+              className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full transition flex-shrink-0"
+            >
               <MoreHorizontal size={18} className="text-gray-500 dark:text-gray-400" />
             </button>
           </div>
 
           {/* Post Content */}
-          <p className="text-gray-900 dark:text-white mt-1 whitespace-pre-wrap break-words">
-            {content}
-          </p>
+          <div className="text-gray-900 dark:text-white mt-1 whitespace-pre-wrap break-words">
+            <TextWithHashtags text={content} />
+          </div>
+
+          {/* Image */}
+          {imageUrl && (
+            <div className="mt-3 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
+              <img 
+                src={imageUrl} 
+                alt="Post image" 
+                className="w-full max-h-[500px] object-cover"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex items-center justify-between mt-3 max-w-md">
-            <button className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-blue-500 group transition">
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/post/${postId}`);
+              }}
+              className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-blue-500 group transition"
+            >
               <div className="p-2 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 rounded-full transition">
                 <MessageCircle size={18} />
               </div>
-              <span className="text-sm">0</span>
+              <span className="text-sm">{totalComments}</span>
             </button>
 
-            <button className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-green-500 group transition">
+            <button 
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-green-500 group transition"
+            >
               <div className="p-2 group-hover:bg-green-50 dark:group-hover:bg-green-900/20 rounded-full transition">
                 <Repeat2 size={18} />
               </div>
@@ -146,7 +191,10 @@ export default function PostCard({ postId, author, contentHash, timestamp, likes
               <span className="text-sm">{likes}</span>
             </button>
 
-            <button className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-blue-500 group transition">
+            <button 
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-blue-500 group transition"
+            >
               <div className="p-2 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 rounded-full transition">
                 <Share size={18} />
               </div>

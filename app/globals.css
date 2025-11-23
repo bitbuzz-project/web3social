@@ -15,10 +15,25 @@
 html {
   background-color: rgb(var(--background));
   color: rgb(var(--foreground));
+  overflow-x: hidden;
 }
 
 body {
   background-color: rgb(var(--background));
   color: rgb(var(--foreground));
   transition: background-color 0.2s ease, color 0.2s ease;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+/* Prevent double scrollbar */
+#__next {
+  overflow-x: hidden;
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
