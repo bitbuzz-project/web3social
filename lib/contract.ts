@@ -1,5 +1,5 @@
 export const SOCIAL_MEDIA_CONTRACT = {
-  address: '0x44B5fcD182F5C457c9c1d14Dcf64EC4d96ED854D' as `0x${string}`,
+  address: '0x2A227198791dA6cF0a26F28b5ea4F7b684537cd4' as `0x${string}`,
   abi: [
     // Add these to the abi array in SOCIAL_MEDIA_CONTRACT
 {

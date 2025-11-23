@@ -6,8 +6,9 @@ import { useRouter } from 'next/navigation';
 import { getFromIPFS, extractImageFromContent } from '@/lib/ipfs';
 import { SOCIAL_MEDIA_CONTRACT } from '@/lib/contract';
 import { useLikePost } from '@/hooks/useLikePost';
+import { useShare } from '@/hooks/useShare';
 import TextWithHashtags from './TextWithHashtags';
-import { Heart, MessageCircle, Repeat2, Share, MoreHorizontal, Loader2 } from 'lucide-react';
+import { Heart, MessageCircle, Repeat2, Share, MoreHorizontal, Loader2, BarChart3 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface PostCardProps {
@@ -16,14 +17,19 @@ interface PostCardProps {
   contentHash: string;
   timestamp: number;
   likes: number;
+  impressions?: number;
 }
 
-export default function PostCard({ postId, author, contentHash, timestamp, likes }: PostCardProps) {
+export default function PostCard({ postId, author, contentHash, timestamp, likes, impressions: initialImpressions = 0 }: PostCardProps) {
   const [content, setContent] = useState('Loading...');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const [showShareMenu, setShowShareMenu] = useState(false);
+  const [localImpressions, setLocalImpressions] = useState(initialImpressions);
   const { address } = useAccount();
   const router = useRouter();
   const { likePost, unlikePost, isLoading: likeLoading } = useLikePost();
+  const { sharePost, isLoading: shareLoading } = useShare();
 
   const isOwnPost = address?.toLowerCase() === author.toLowerCase();
 
@@ -47,6 +53,60 @@ export default function PostCard({ postId, author, contentHash, timestamp, likes
     functionName: 'getCommentCount',
     args: [BigInt(postId)],
   });
+
+  // Get updated post data for shares
+  const { data: postData } = useReadContract({
+    address: SOCIAL_MEDIA_CONTRACT.address,
+    abi: SOCIAL_MEDIA_CONTRACT.abi,
+    functionName: 'getPost',
+    args: [BigInt(postId)],
+  });
+
+  const shares = postData?.shares ? Number(postData.shares) : 0;
+
+  // Track impression locally when post is visible
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !isVisible) {
+          setIsVisible(true);
+          
+          // Track impression locally
+          const viewedPosts = JSON.parse(localStorage.getItem('viewedPosts') || '{}');
+          if (!viewedPosts[postId]) {
+            viewedPosts[postId] = true;
+            localStorage.setItem('viewedPosts', JSON.stringify(viewedPosts));
+            
+            // Increment local impression count
+            setLocalImpressions(prev => prev + 1);
+            
+            // Optionally: Send to backend API to track impressions
+            // This way you can aggregate data without blockchain costs
+          }
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    const element = document.getElementById(`post-${postId}`);
+    if (element) {
+      observer.observe(element);
+    }
+
+    return () => {
+      if (element) {
+        observer.unobserve(element);
+      }
+    };
+  }, [postId, isVisible]);
+
+  // Load local impression count on mount
+  useEffect(() => {
+    const impressionCount = parseInt(localStorage.getItem(`impressions-${postId}`) || '0');
+    if (impressionCount > localImpressions) {
+      setLocalImpressions(impressionCount);
+    }
+  }, [postId]);
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -86,11 +146,37 @@ export default function PostCard({ postId, author, contentHash, timestamp, likes
     router.push(`/post/${postId}`);
   };
 
+  const handleShare = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowShareMenu(!showShareMenu);
+  };
+
+  const handleCopyLink = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = `${window.location.origin}/post/${postId}`;
+    navigator.clipboard.writeText(url);
+    setShowShareMenu(false);
+  };
+
+  const handleShareOnChain = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    sharePost(postId);
+    setShowShareMenu(false);
+  };
+
   const username = profile?.username || `user_${author?.slice(-4)}`;
   const totalComments = commentCount ? Number(commentCount) : 0;
 
+  // Format numbers (1.2K, 5.3M, etc.)
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+    return num.toString();
+  };
+
   return (
     <article 
+      id={`post-${postId}`}
       onClick={handlePostClick}
       className="px-4 py-3 border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900/30 transition cursor-pointer"
     >
@@ -194,11 +280,52 @@ export default function PostCard({ postId, author, contentHash, timestamp, likes
             <button 
               onClick={(e) => e.stopPropagation()}
               className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-blue-500 group transition"
+              title={`${localImpressions} impressions`}
             >
               <div className="p-2 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 rounded-full transition">
-                <Share size={18} />
+                <BarChart3 size={18} />
               </div>
+              <span className="text-sm">{formatNumber(localImpressions)}</span>
             </button>
+
+            <div className="relative">
+              <button 
+                onClick={handleShare}
+                className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-blue-500 group transition"
+              >
+                <div className="p-2 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 rounded-full transition">
+                  {shareLoading ? (
+                    <Loader2 size={18} className="animate-spin" />
+                  ) : (
+                    <Share size={18} />
+                  )}
+                </div>
+                <span className="text-sm">{shares}</span>
+              </button>
+
+              {showShareMenu && (
+                <div 
+                  className="absolute bottom-full right-0 mb-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-10"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    onClick={handleCopyLink}
+                    className="w-full px-4 py-2 text-left text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition text-sm flex items-center gap-2"
+                  >
+                    <span>📋</span>
+                    <span>Copy link</span>
+                  </button>
+                  <button
+                    onClick={handleShareOnChain}
+                    disabled={shareLoading}
+                    className="w-full px-4 py-2 text-left text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition text-sm disabled:opacity-50 flex items-center gap-2"
+                  >
+                    <span>⛓️</span>
+                    <span>Share on-chain</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
