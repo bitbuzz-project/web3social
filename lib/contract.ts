@@ -1,12 +1,13 @@
-// Update this file: lib/contract.ts
-// Keep the name as SOCIAL_MEDIA_CONTRACT (don't change to V2)
+// lib/contract.ts - COMPLETE V3 ABI
+// Replace your current lib/contract.ts with this file
 
 export const SOCIAL_MEDIA_CONTRACT = {
-  // ⚠️ REPLACE THIS ADDRESS with your deployed SocialMediaV2.sol address
   address: '0x1E018731a31BD86f2Afa51AEbC5E7983758a283a' as `0x${string}`,
   
   abi: [
-    // Posts - Enhanced
+    // ============================================
+    // POST FUNCTIONS
+    // ============================================
     {
       "inputs": [
         {"internalType": "string", "name": "_contentHash", "type": "string"},
@@ -14,6 +15,28 @@ export const SOCIAL_MEDIA_CONTRACT = {
         {"internalType": "address[]", "name": "_mentions", "type": "address[]"}
       ],
       "name": "createPost",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {"internalType": "string", "name": "_contentHash", "type": "string"},
+        {"internalType": "uint256", "name": "_threadId", "type": "uint256"},
+        {"internalType": "uint256", "name": "_quotedPostId", "type": "uint256"},
+        {"internalType": "address[]", "name": "_mentions", "type": "address[]"}
+      ],
+      "name": "createThreadPost",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {"internalType": "uint256", "name": "_postId", "type": "uint256"},
+        {"internalType": "string", "name": "_newContentHash", "type": "string"}
+      ],
+      "name": "editPost",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -53,37 +76,10 @@ export const SOCIAL_MEDIA_CONTRACT = {
       "stateMutability": "nonpayable",
       "type": "function"
     },
-    {
-      "inputs": [{"internalType": "uint256", "name": "_postId", "type": "uint256"}],
-      "name": "getPost",
-      "outputs": [{
-        "components": [
-          {"internalType": "uint256", "name": "id", "type": "uint256"},
-          {"internalType": "address", "name": "author", "type": "address"},
-          {"internalType": "string", "name": "contentHash", "type": "string"},
-          {"internalType": "uint256", "name": "timestamp", "type": "uint256"},
-          {"internalType": "uint256", "name": "likes", "type": "uint256"},
-          {"internalType": "uint256", "name": "shares", "type": "uint256"},
-          {"internalType": "uint256", "name": "quotedPostId", "type": "uint256"},
-          {"internalType": "uint256", "name": "impressions", "type": "uint256"},
-          {"internalType": "bool", "name": "isDeleted", "type": "bool"}
-        ],
-        "internalType": "struct SocialMediaV2.Post",
-        "name": "",
-        "type": "tuple"
-      }],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [{"internalType": "uint256", "name": "_postId", "type": "uint256"}],
-      "name": "getQuotePosts",
-      "outputs": [{"internalType": "uint256[]", "name": "", "type": "uint256[]"}],
-      "stateMutability": "view",
-      "type": "function"
-    },
     
-    // Comments
+    // ============================================
+    // COMMENT FUNCTIONS
+    // ============================================
     {
       "inputs": [
         {"internalType": "uint256", "name": "_postId", "type": "uint256"},
@@ -94,34 +90,10 @@ export const SOCIAL_MEDIA_CONTRACT = {
       "stateMutability": "nonpayable",
       "type": "function"
     },
-    {
-      "inputs": [{"internalType": "uint256", "name": "_postId", "type": "uint256"}],
-      "name": "getComments",
-      "outputs": [{
-        "components": [
-          {"internalType": "uint256", "name": "id", "type": "uint256"},
-          {"internalType": "uint256", "name": "postId", "type": "uint256"},
-          {"internalType": "address", "name": "author", "type": "address"},
-          {"internalType": "string", "name": "contentHash", "type": "string"},
-          {"internalType": "uint256", "name": "timestamp", "type": "uint256"},
-          {"internalType": "bool", "name": "isDeleted", "type": "bool"}
-        ],
-        "internalType": "struct SocialMediaV2.Comment[]",
-        "name": "",
-        "type": "tuple[]"
-      }],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [{"internalType": "uint256", "name": "_postId", "type": "uint256"}],
-      "name": "getCommentCount",
-      "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-      "stateMutability": "view",
-      "type": "function"
-    },
     
-    // Bookmarks - NEW
+    // ============================================
+    // BOOKMARK FUNCTIONS
+    // ============================================
     {
       "inputs": [{"internalType": "uint256", "name": "_postId", "type": "uint256"}],
       "name": "bookmarkPost",
@@ -136,68 +108,10 @@ export const SOCIAL_MEDIA_CONTRACT = {
       "stateMutability": "nonpayable",
       "type": "function"
     },
-    {
-      "inputs": [{"internalType": "address", "name": "_user", "type": "address"}],
-      "name": "getUserBookmarks",
-      "outputs": [{"internalType": "uint256[]", "name": "", "type": "uint256[]"}],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {"internalType": "address", "name": "", "type": "address"},
-        {"internalType": "uint256", "name": "", "type": "uint256"}
-      ],
-      "name": "hasBookmarked",
-      "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
-      "stateMutability": "view",
-      "type": "function"
-    },
     
-    // Notifications - NEW
-    {
-      "inputs": [{"internalType": "address", "name": "_user", "type": "address"}],
-      "name": "getUserNotifications",
-      "outputs": [{
-        "components": [
-          {"internalType": "uint256", "name": "id", "type": "uint256"},
-          {"internalType": "address", "name": "recipient", "type": "address"},
-          {"internalType": "address", "name": "actor", "type": "address"},
-          {"internalType": "uint256", "name": "postId", "type": "uint256"},
-          {"internalType": "enum SocialMediaV2.NotificationType", "name": "notifType", "type": "uint8"},
-          {"internalType": "uint256", "name": "timestamp", "type": "uint256"},
-          {"internalType": "bool", "name": "isRead", "type": "bool"}
-        ],
-        "internalType": "struct SocialMediaV2.Notification[]",
-        "name": "",
-        "type": "tuple[]"
-      }],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [{"internalType": "address", "name": "_user", "type": "address"}],
-      "name": "getUnreadNotificationCount",
-      "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [{"internalType": "uint256", "name": "_notificationId", "type": "uint256"}],
-      "name": "markNotificationRead",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "markAllNotificationsRead",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    
-    // Profile & Follow
+    // ============================================
+    // PROFILE FUNCTIONS
+    // ============================================
     {
       "inputs": [
         {"internalType": "string", "name": "_username", "type": "string"},
@@ -221,27 +135,6 @@ export const SOCIAL_MEDIA_CONTRACT = {
     },
     {
       "inputs": [{"internalType": "address", "name": "_user", "type": "address"}],
-      "name": "getProfile",
-      "outputs": [{
-        "components": [
-          {"internalType": "string", "name": "username", "type": "string"},
-          {"internalType": "string", "name": "bio", "type": "string"},
-          {"internalType": "string", "name": "avatarHash", "type": "string"},
-          {"internalType": "uint256", "name": "followerCount", "type": "uint256"},
-          {"internalType": "uint256", "name": "followingCount", "type": "uint256"},
-          {"internalType": "bool", "name": "isVerified", "type": "bool"},
-          {"internalType": "address", "name": "nftContract", "type": "address"},
-          {"internalType": "uint256", "name": "nftTokenId", "type": "uint256"}
-        ],
-        "internalType": "struct SocialMediaV2.Profile",
-        "name": "",
-        "type": "tuple"
-      }],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [{"internalType": "address", "name": "_user", "type": "address"}],
       "name": "followUser",
       "outputs": [],
       "stateMutability": "nonpayable",
@@ -254,6 +147,174 @@ export const SOCIAL_MEDIA_CONTRACT = {
       "stateMutability": "nonpayable",
       "type": "function"
     },
+    
+    // ============================================
+    // NOTIFICATION FUNCTIONS
+    // ============================================
+    {
+      "inputs": [{"internalType": "uint256", "name": "_notificationId", "type": "uint256"}],
+      "name": "markNotificationRead",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "markAllNotificationsRead",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    
+    // ============================================
+    // THREAD FUNCTIONS
+    // ============================================
+    {
+      "inputs": [{"internalType": "uint256", "name": "_threadId", "type": "uint256"}],
+      "name": "finalizeThread",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    
+    // ============================================
+    // VIEW FUNCTIONS - POSTS
+    // ============================================
+    {
+      "inputs": [{"internalType": "uint256", "name": "_postId", "type": "uint256"}],
+      "name": "getPost",
+      "outputs": [{
+        "components": [
+          {"internalType": "uint256", "name": "id", "type": "uint256"},
+          {"internalType": "address", "name": "author", "type": "address"},
+          {"internalType": "string", "name": "contentHash", "type": "string"},
+          {"internalType": "uint256", "name": "timestamp", "type": "uint256"},
+          {"internalType": "uint256", "name": "likes", "type": "uint256"},
+          {"internalType": "uint256", "name": "shares", "type": "uint256"},
+          {"internalType": "uint256", "name": "quotedPostId", "type": "uint256"},
+          {"internalType": "uint256", "name": "impressions", "type": "uint256"},
+          {"internalType": "uint256", "name": "threadId", "type": "uint256"},
+          {"internalType": "bool", "name": "isDeleted", "type": "bool"},
+          {"internalType": "bool", "name": "isEdited", "type": "bool"},
+          {"internalType": "uint256", "name": "lastEditTime", "type": "uint256"}
+        ],
+        "internalType": "struct SocialMediaV3.Post",
+        "name": "",
+        "type": "tuple"
+      }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [{"internalType": "uint256", "name": "_postId", "type": "uint256"}],
+      "name": "getQuotePosts",
+      "outputs": [{"internalType": "uint256[]", "name": "", "type": "uint256[]"}],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [{"internalType": "uint256", "name": "_postId", "type": "uint256"}],
+      "name": "getEditHistory",
+      "outputs": [{
+        "components": [
+          {"internalType": "uint256", "name": "editId", "type": "uint256"},
+          {"internalType": "uint256", "name": "postId", "type": "uint256"},
+          {"internalType": "string", "name": "contentHash", "type": "string"},
+          {"internalType": "uint256", "name": "timestamp", "type": "uint256"}
+        ],
+        "internalType": "struct SocialMediaV3.PostEdit[]",
+        "name": "",
+        "type": "tuple[]"
+      }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {"internalType": "uint256", "name": "_postId", "type": "uint256"},
+        {"internalType": "address", "name": "_user", "type": "address"}
+      ],
+      "name": "canEditPost",
+      "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    
+    // ============================================
+    // VIEW FUNCTIONS - COMMENTS
+    // ============================================
+    {
+      "inputs": [{"internalType": "uint256", "name": "_postId", "type": "uint256"}],
+      "name": "getComments",
+      "outputs": [{
+        "components": [
+          {"internalType": "uint256", "name": "id", "type": "uint256"},
+          {"internalType": "uint256", "name": "postId", "type": "uint256"},
+          {"internalType": "address", "name": "author", "type": "address"},
+          {"internalType": "string", "name": "contentHash", "type": "string"},
+          {"internalType": "uint256", "name": "timestamp", "type": "uint256"},
+          {"internalType": "bool", "name": "isDeleted", "type": "bool"}
+        ],
+        "internalType": "struct SocialMediaV3.Comment[]",
+        "name": "",
+        "type": "tuple[]"
+      }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [{"internalType": "uint256", "name": "_postId", "type": "uint256"}],
+      "name": "getCommentCount",
+      "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    
+    // ============================================
+    // VIEW FUNCTIONS - BOOKMARKS
+    // ============================================
+    {
+      "inputs": [{"internalType": "address", "name": "_user", "type": "address"}],
+      "name": "getUserBookmarks",
+      "outputs": [{"internalType": "uint256[]", "name": "", "type": "uint256[]"}],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {"internalType": "address", "name": "", "type": "address"},
+        {"internalType": "uint256", "name": "", "type": "uint256"}
+      ],
+      "name": "hasBookmarked",
+      "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    
+    // ============================================
+    // VIEW FUNCTIONS - PROFILE
+    // ============================================
+    {
+      "inputs": [{"internalType": "address", "name": "_user", "type": "address"}],
+      "name": "getProfile",
+      "outputs": [{
+        "components": [
+          {"internalType": "string", "name": "username", "type": "string"},
+          {"internalType": "string", "name": "bio", "type": "string"},
+          {"internalType": "string", "name": "avatarHash", "type": "string"},
+          {"internalType": "uint256", "name": "followerCount", "type": "uint256"},
+          {"internalType": "uint256", "name": "followingCount", "type": "uint256"},
+          {"internalType": "bool", "name": "isVerified", "type": "bool"},
+          {"internalType": "address", "name": "nftContract", "type": "address"},
+          {"internalType": "uint256", "name": "nftTokenId", "type": "uint256"}
+        ],
+        "internalType": "struct SocialMediaV3.Profile",
+        "name": "",
+        "type": "tuple"
+      }],
+      "stateMutability": "view",
+      "type": "function"
+    },
     {
       "inputs": [
         {"internalType": "address", "name": "_follower", "type": "address"},
@@ -264,6 +325,91 @@ export const SOCIAL_MEDIA_CONTRACT = {
       "stateMutability": "view",
       "type": "function"
     },
+    
+    // ============================================
+    // VIEW FUNCTIONS - NOTIFICATIONS
+    // ============================================
+    {
+      "inputs": [{"internalType": "address", "name": "_user", "type": "address"}],
+      "name": "getUserNotifications",
+      "outputs": [{
+        "components": [
+          {"internalType": "uint256", "name": "id", "type": "uint256"},
+          {"internalType": "address", "name": "recipient", "type": "address"},
+          {"internalType": "address", "name": "actor", "type": "address"},
+          {"internalType": "uint256", "name": "postId", "type": "uint256"},
+          {"internalType": "enum SocialMediaV3.NotificationType", "name": "notifType", "type": "uint8"},
+          {"internalType": "uint256", "name": "timestamp", "type": "uint256"},
+          {"internalType": "bool", "name": "isRead", "type": "bool"}
+        ],
+        "internalType": "struct SocialMediaV3.Notification[]",
+        "name": "",
+        "type": "tuple[]"
+      }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [{"internalType": "address", "name": "_user", "type": "address"}],
+      "name": "getUnreadNotificationCount",
+      "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    
+    // ============================================
+    // VIEW FUNCTIONS - THREADS
+    // ============================================
+    {
+      "inputs": [{"internalType": "uint256", "name": "_threadId", "type": "uint256"}],
+      "name": "getThread",
+      "outputs": [{
+        "components": [
+          {"internalType": "uint256", "name": "threadId", "type": "uint256"},
+          {"internalType": "address", "name": "author", "type": "address"},
+          {"internalType": "uint256[]", "name": "postIds", "type": "uint256[]"},
+          {"internalType": "uint256", "name": "createdAt", "type": "uint256"},
+          {"internalType": "bool", "name": "isActive", "type": "bool"}
+        ],
+        "internalType": "struct SocialMediaV3.Thread",
+        "name": "",
+        "type": "tuple"
+      }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [{"internalType": "uint256", "name": "_threadId", "type": "uint256"}],
+      "name": "getThreadPosts",
+      "outputs": [{"internalType": "uint256[]", "name": "", "type": "uint256[]"}],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [{"internalType": "address", "name": "_user", "type": "address"}],
+      "name": "getUserThreads",
+      "outputs": [{"internalType": "uint256[]", "name": "", "type": "uint256[]"}],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [{"internalType": "uint256", "name": "_postId", "type": "uint256"}],
+      "name": "isPartOfThread",
+      "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [{"internalType": "uint256", "name": "_postId", "type": "uint256"}],
+      "name": "getThreadIdForPost",
+      "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    
+    // ============================================
+    // VIEW FUNCTIONS - LIKES
+    // ============================================
     {
       "inputs": [
         {"internalType": "uint256", "name": "", "type": "uint256"},
@@ -275,7 +421,9 @@ export const SOCIAL_MEDIA_CONTRACT = {
       "type": "function"
     },
     
-    // State variables
+    // ============================================
+    // STATE VARIABLES
+    // ============================================
     {
       "inputs": [],
       "name": "postCount",
@@ -297,8 +445,24 @@ export const SOCIAL_MEDIA_CONTRACT = {
       "stateMutability": "view",
       "type": "function"
     },
+    {
+      "inputs": [],
+      "name": "threadCount",
+      "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "EDIT_TIME_LIMIT",
+      "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+      "stateMutability": "view",
+      "type": "function"
+    },
     
-    // Events
+    // ============================================
+    // EVENTS
+    // ============================================
     {
       "anonymous": false,
       "inputs": [
@@ -309,6 +473,44 @@ export const SOCIAL_MEDIA_CONTRACT = {
         {"indexed": false, "internalType": "uint256", "name": "quotedPostId", "type": "uint256"}
       ],
       "name": "PostCreated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {"indexed": true, "internalType": "uint256", "name": "postId", "type": "uint256"},
+        {"indexed": true, "internalType": "address", "name": "author", "type": "address"},
+        {"indexed": false, "internalType": "string", "name": "newContentHash", "type": "string"},
+        {"indexed": false, "internalType": "uint256", "name": "editNumber", "type": "uint256"}
+      ],
+      "name": "PostEdited",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {"indexed": true, "internalType": "uint256", "name": "threadId", "type": "uint256"},
+        {"indexed": true, "internalType": "address", "name": "author", "type": "address"},
+        {"indexed": false, "internalType": "uint256", "name": "firstPostId", "type": "uint256"}
+      ],
+      "name": "ThreadCreated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {"indexed": true, "internalType": "uint256", "name": "threadId", "type": "uint256"},
+        {"indexed": false, "internalType": "uint256", "name": "newPostId", "type": "uint256"}
+      ],
+      "name": "ThreadContinued",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {"indexed": true, "internalType": "uint256", "name": "threadId", "type": "uint256"}
+      ],
+      "name": "ThreadFinalized",
       "type": "event"
     },
     {
@@ -407,7 +609,7 @@ export const SOCIAL_MEDIA_CONTRACT = {
       "inputs": [
         {"indexed": true, "internalType": "uint256", "name": "notificationId", "type": "uint256"},
         {"indexed": true, "internalType": "address", "name": "recipient", "type": "address"},
-        {"indexed": false, "internalType": "enum SocialMediaV2.NotificationType", "name": "notifType", "type": "uint8"}
+        {"indexed": false, "internalType": "enum SocialMediaV3.NotificationType", "name": "notifType", "type": "uint8"}
       ],
       "name": "NotificationCreated",
       "type": "event"

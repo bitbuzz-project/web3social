@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { SOCIAL_MEDIA_CONTRACT } from '@/lib/contract';
 import { uploadToIPFS, getFromIPFS, extractImageFromContent } from '@/lib/ipfs';
 import { X, Loader2, Clock } from 'lucide-react';
@@ -17,6 +17,7 @@ export default function EditPostModal({ isOpen, onClose, postId, currentContentH
   const [content, setContent] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [loading, setLoading] = useState(true);
+  const { address } = useAccount();
 
   const { data: hash, writeContract, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
@@ -25,7 +26,7 @@ export default function EditPostModal({ isOpen, onClose, postId, currentContentH
     address: SOCIAL_MEDIA_CONTRACT.address,
     abi: SOCIAL_MEDIA_CONTRACT.abi,
     functionName: 'canEditPost',
-    args: [BigInt(postId), '0xYourAddress' as `0x${string}`], // Replace with actual user address
+    args: [BigInt(postId), address as `0x${string}`],
   });
 
   useEffect(() => {
@@ -35,6 +36,9 @@ export default function EditPostModal({ isOpen, onClose, postId, currentContentH
         const { text: postText, imageUrl: img } = extractImageFromContent(text);
         setContent(postText);
         setImageUrl(img || '');
+        setLoading(false);
+      }).catch(() => {
+        setContent('Failed to load');
         setLoading(false);
       });
     }

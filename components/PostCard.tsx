@@ -8,8 +8,9 @@ import { SOCIAL_MEDIA_CONTRACT } from '@/lib/contract';
 import { useLikePost } from '@/hooks/useLikePost';
 import { useBookmark } from '@/hooks/useBookmark';
 import QuotePostModal from './QuotePostModal';
+import EditPostModal from './EditPostModal';
 import TextWithHashtags from './TextWithHashtags';
-import { Heart, MessageCircle, Repeat2, Share, MoreHorizontal, Loader2, BarChart3, Bookmark, Quote } from 'lucide-react';
+import { Heart, MessageCircle, Quote, Share, MoreHorizontal, Loader2, Bookmark, Edit, Link2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface PostCardProps {
@@ -23,7 +24,7 @@ interface PostCardProps {
   impressions?: number;
 }
 
-export default function PostCardEnhanced({ 
+export default function PostCard({ 
   postId, 
   author, 
   contentHash, 
@@ -35,10 +36,10 @@ export default function PostCardEnhanced({
 }: PostCardProps) {
   const [content, setContent] = useState('Loading...');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [isVisible, setIsVisible] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [showQuoteModal, setShowQuoteModal] = useState(false);
-  const [localImpressions, setLocalImpressions] = useState(initialImpressions);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   
   const { address } = useAccount();
   const router = useRouter();
@@ -46,6 +47,14 @@ export default function PostCardEnhanced({
   const { bookmarkPost, unbookmarkPost, isLoading: bookmarkLoading } = useBookmark();
 
   const isOwnPost = address?.toLowerCase() === author.toLowerCase();
+
+  // Get full post data to check edit status and thread
+  const { data: fullPost } = useReadContract({
+    address: SOCIAL_MEDIA_CONTRACT.address,
+    abi: SOCIAL_MEDIA_CONTRACT.abi,
+    functionName: 'getPost',
+    args: [BigInt(postId)],
+  });
 
   const { data: hasLiked, refetch: refetchLike } = useReadContract({
     address: SOCIAL_MEDIA_CONTRACT.address,
@@ -73,6 +82,15 @@ export default function PostCardEnhanced({
     abi: SOCIAL_MEDIA_CONTRACT.abi,
     functionName: 'getCommentCount',
     args: [BigInt(postId)],
+  });
+
+  // Check if can edit
+  const { data: canEdit } = useReadContract({
+    address: SOCIAL_MEDIA_CONTRACT.address,
+    abi: SOCIAL_MEDIA_CONTRACT.abi,
+    functionName: 'canEditPost',
+    args: [BigInt(postId), address as `0x${string}`],
+    query: { enabled: isOwnPost },
   });
 
   // Get quoted post if exists
@@ -138,6 +156,12 @@ export default function PostCardEnhanced({
     setShowShareMenu(false);
   };
 
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowEditModal(true);
+    setShowMoreMenu(false);
+  };
+
   const handleCopyLink = (e: React.MouseEvent) => {
     e.stopPropagation();
     const url = `${window.location.origin}/post/${postId}`;
@@ -147,12 +171,8 @@ export default function PostCardEnhanced({
 
   const username = profile?.username || `user_${author?.slice(-4)}`;
   const totalComments = commentCount ? Number(commentCount) : 0;
-
-  const formatNumber = (num: number) => {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-    return num.toString();
-  };
+  const isEdited = fullPost?.isEdited || false;
+  const isPartOfThread = fullPost?.threadId && Number(fullPost.threadId) > 0;
 
   return (
     <>
@@ -185,13 +205,53 @@ export default function PostCardEnhanced({
                 <span className="text-gray-500 dark:text-gray-400 text-sm whitespace-nowrap">
                   {formatDistanceToNow(new Date(timestamp * 1000), { addSuffix: true })}
                 </span>
+                {isEdited && (
+                  <>
+                    <span className="text-gray-500 dark:text-gray-400">·</span>
+                    <span className="text-gray-500 dark:text-gray-400 text-sm">Edited</span>
+                  </>
+                )}
+                {isPartOfThread && (
+                  <>
+                    <span className="text-gray-500 dark:text-gray-400">·</span>
+                    <Link2 size={14} className="text-blue-500" title="Part of thread" />
+                  </>
+                )}
               </div>
-              <button 
-                onClick={(e) => e.stopPropagation()}
-                className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full transition flex-shrink-0"
-              >
-                <MoreHorizontal size={18} className="text-gray-500 dark:text-gray-400" />
-              </button>
+              
+              {/* More Menu */}
+              <div className="relative">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowMoreMenu(!showMoreMenu);
+                  }}
+                  className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full transition flex-shrink-0"
+                >
+                  <MoreHorizontal size={18} className="text-gray-500 dark:text-gray-400" />
+                </button>
+
+                {showMoreMenu && (
+                  <div className="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50 min-w-[200px]">
+                    {isOwnPost && canEdit && (
+                      <button
+                        onClick={handleEdit}
+                        className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-900 dark:text-white"
+                      >
+                        <Edit size={16} />
+                        Edit post
+                      </button>
+                    )}
+                    <button
+                      onClick={handleCopyLink}
+                      className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-900 dark:text-white"
+                    >
+                      <Share size={16} />
+                      Copy link
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="text-gray-900 dark:text-white mt-1 whitespace-pre-wrap break-words">
@@ -297,6 +357,15 @@ export default function PostCardEnhanced({
         onClose={() => setShowQuoteModal(false)}
         quotedPostId={postId}
       />
+
+      {isOwnPost && (
+        <EditPostModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          postId={postId}
+          currentContentHash={contentHash}
+        />
+      )}
     </>
   );
 }
