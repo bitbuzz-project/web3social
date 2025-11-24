@@ -62,6 +62,13 @@ export default function CreatePostModal({ isOpen, onClose }: CreatePostModalProp
     }
   };
 
+  // Detect mentions in the content (@0x...)
+  const detectMentions = (text: string): string[] => {
+    const mentionRegex = /@(0x[a-fA-F0-9]{40})/g;
+    const matches = text.match(mentionRegex);
+    return matches ? matches.map(m => m.substring(1)) : [];
+  };
+
   const handlePost = async () => {
     if (!content.trim() && !imageUrl.trim()) return;
 
@@ -72,12 +79,21 @@ export default function CreatePostModal({ isOpen, onClose }: CreatePostModalProp
         : content;
       
       const hash = await uploadToIPFS(postContent);
+      
+      // Detect mentions
+      const mentions = detectMentions(content);
 
+      // Call createPost with new parameters
+      // createPost(contentHash, quotedPostId, mentions[])
       writeContract({
         address: SOCIAL_MEDIA_CONTRACT.address,
         abi: SOCIAL_MEDIA_CONTRACT.abi,
         functionName: 'createPost',
-        args: [hash],
+        args: [
+          hash,           // contentHash
+          0n,             // quotedPostId (0 = not a quote)
+          mentions as `0x${string}`[]  // mentions array
+        ],
       });
     } catch (error) {
       console.error('Error creating post:', error);
@@ -146,6 +162,11 @@ export default function CreatePostModal({ isOpen, onClose }: CreatePostModalProp
                 disabled={isLoading}
                 autoFocus
               />
+
+              {/* Mention hint */}
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                💡 Mention users with @0xAddress
+              </div>
 
               {/* Image URL Input */}
               <div className="mb-3">
