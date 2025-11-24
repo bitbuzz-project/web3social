@@ -1,56 +1,111 @@
-export async function uploadToIPFS(content: string) {
+// IPFS utility functions for Pinata
+
+export async function uploadToIPFS(message: string): Promise<string> {
   try {
-    const formData = new FormData();
-    const blob = new Blob([content], { type: 'text/plain' });
-    formData.append('file', blob, 'post.txt');
-
     console.log('Uploading to IPFS...');
-    console.log('JWT exists:', !!process.env.NEXT_PUBLIC_PINATA_JWT);
+    
+    const JWT = process.env.NEXT_PUBLIC_PINATA_JWT;
+    
+    if (!JWT) {
+      throw new Error('Pinata JWT not configured');
+    }
 
-    const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+    console.log('JWT exists:', !!JWT);
+
+    // Store as JSON object for consistency
+    const data = JSON.stringify({
+      message: message,
+      timestamp: Date.now(),
+    });
+
+    const response = await fetch('https://api.pinata.cloud/pinning/pinJSONToIPFS', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`,
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${JWT}`,
       },
-      body: formData,
+      body: JSON.stringify({
+        pinataContent: {
+          message: message,
+          timestamp: Date.now(),
+        },
+        pinataMetadata: {
+          name: `message-${Date.now()}.json`,
+        },
+      }),
     });
 
     console.log('Response status:', response.status);
-    
-    const data = await response.json();
-    console.log('Response data:', data);
 
     if (!response.ok) {
-      throw new Error(JSON.stringify(data));
+      const errorText = await response.text();
+      console.error('Pinata error:', errorText);
+      throw new Error(`Failed to upload to IPFS: ${response.status}`);
     }
 
-    return data.IpfsHash;
+    const result = await response.json();
+    console.log('Response data:', result);
+
+    return result.IpfsHash;
   } catch (error) {
-    console.error('Full error:', error);
+    console.error('Error uploading to IPFS:', error);
     throw error;
   }
 }
 
-export async function getFromIPFS(hash: string) {
+export async function getFromIPFS(hash: string): Promise<string> {
   try {
     const response = await fetch(`https://gateway.pinata.cloud/ipfs/${hash}`);
-    const text = await response.text();
-    return text;
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch from IPFS: ${response.status}`);
+    }
+
+    const contentType = response.headers.get('content-type');
+    
+    // Check if response is JSON or plain text
+    if (contentType?.includes('application/json')) {
+      const data = await response.json();
+      return data.message || data.content || data.text || JSON.stringify(data);
+    } else {
+      // Plain text response
+      const text = await response.text();
+      
+      // Try to parse as JSON in case content-type header is wrong
+      try {
+        const jsonData = JSON.parse(text);
+        return jsonData.message || jsonData.content || jsonData.text || text;
+      } catch {
+        // Not JSON, return as-is
+        return text;
+      }
+    }
   } catch (error) {
     console.error('Error fetching from IPFS:', error);
     throw error;
   }
 }
 
-export function extractImageFromContent(content: string): { text: string; imageUrl: string | null } {
-  const imageRegex = /\[IMAGE\](.*?)\[\/IMAGE\]/;
-  const match = content.match(imageRegex);
+export function extractImageFromContent(content: string): string | null {
+  // Extract image URL from markdown or HTML content
   
-  if (match) {
-    const imageUrl = match[1];
-    const text = content.replace(imageRegex, '').trim();
-    return { text, imageUrl };
+  // Match markdown image: ![alt](url)
+  const markdownMatch = content.match(/!\[.*?\]\((.*?)\)/);
+  if (markdownMatch) {
+    return markdownMatch[1];
   }
   
-  return { text: content, imageUrl: null };
+  // Match HTML img tag: <img src="url" />
+  const htmlMatch = content.match(/<img[^>]+src="([^">]+)"/);
+  if (htmlMatch) {
+    return htmlMatch[1];
+  }
+  
+  // Match plain URL that looks like an image
+  const urlMatch = content.match(/https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp)/i);
+  if (urlMatch) {
+    return urlMatch[0];
+  }
+  
+  return null;
 }

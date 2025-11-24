@@ -3,7 +3,6 @@
 import { useReadContract } from 'wagmi';
 import { useState, useEffect } from 'react';
 import { SOCIAL_MEDIA_CONTRACT } from '@/lib/contract';
-import { CheckCircle2 } from 'lucide-react';
 
 interface UserAvatarProps {
   address: `0x${string}`;
@@ -114,17 +113,20 @@ export default function UserAvatar({
   }, [tokenURI]);
 
   const sizeClasses = {
-    sm: 'w-8 h-8',
-    md: 'w-10 h-10',
-    lg: 'w-12 h-12',
-    xl: 'w-16 h-16',
+    sm: 'w-8 h-8 text-xs',
+    md: 'w-10 h-10 text-sm',
+    lg: 'w-12 h-12 text-base',
+    xl: 'w-16 h-16 text-xl',
   };
 
-  const verifiedSizeClasses = {
+  // If custom className is provided, don't use default size
+  const avatarSizeClass = className ? '' : sizeClasses[size];
+
+  const badgeSizeClasses = {
     sm: 'w-3 h-3',
-    md: 'w-4 h-4',
-    lg: 'w-5 h-5',
-    xl: 'w-6 h-6',
+    md: 'w-3.5 h-3.5',
+    lg: 'w-4 h-4',
+    xl: 'w-5 h-5',
   };
 
   // Determine what to display
@@ -133,9 +135,9 @@ export default function UserAvatar({
   const isVerified = profile?.isVerified || hasNftAvatar;
 
   return (
-    <div className={`relative inline-block ${className}`}>
+    <div className={`relative inline-block`}>
       <div
-        className={`${sizeClasses[size]} rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold border-2 border-gray-200 dark:border-gray-700`}
+        className={`${className || avatarSizeClass} rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold`}
       >
         {loadingNft ? (
           // Loading NFT
@@ -156,16 +158,26 @@ export default function UserAvatar({
           />
         ) : (
           // Default Avatar (first 2 chars of address)
-          <span className="text-xs uppercase">
+          <span className="uppercase">
             {address.slice(2, 4)}
           </span>
         )}
       </div>
 
-      {/* Verified Badge */}
+      {/* Verified Badge - Small checkmark icon */}
       {showVerified && isVerified && (
-        <div className="absolute -bottom-0.5 -right-0.5 bg-blue-500 rounded-full p-0.5 border-2 border-white dark:border-gray-900">
-          <CheckCircle2 className={`${verifiedSizeClasses[size]} text-white`} />
+        <div className="absolute -bottom-0.5 -right-0.5 bg-blue-500 rounded-full p-0.5 border-2 border-white dark:border-black">
+          <svg
+            className={`${badgeSizeClasses[size]} text-white`}
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fillRule="evenodd"
+              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+              clipRule="evenodd"
+            />
+          </svg>
         </div>
       )}
     </div>

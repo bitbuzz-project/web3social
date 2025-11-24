@@ -7,6 +7,7 @@ import { SOCIAL_MEDIA_CONTRACT } from '@/lib/contract';
 import EditProfileModal from '@/components/EditProfileModal';
 import FeedNavigation from '@/components/FeedNavigation';
 import PostCard from '@/components/PostCard';
+import UserAvatar from '@/components/UserAvatar';
 import { ArrowLeft, Calendar, LinkIcon, MapPin, MoreHorizontal, Loader2 } from 'lucide-react';
 import { getFromIPFS } from '@/lib/ipfs';
 import { formatDistanceToNow } from 'date-fns';
@@ -91,8 +92,12 @@ export default function ProfilePage() {
           <div className="px-4 pb-4">
             {/* Avatar & Edit Button */}
             <div className="flex justify-between items-start -mt-16 mb-4">
-              <div className="w-[134px] h-[134px] bg-gradient-to-br from-blue-500 to-purple-600 rounded-full border-4 border-white dark:border-black shadow-lg flex items-center justify-center text-5xl font-bold text-white">
-                {address?.slice(2, 4).toUpperCase()}
+              <div className="border-4 border-white dark:border-black rounded-full">
+                <UserAvatar 
+                  address={address as `0x${string}`}
+                  showVerified={true}
+                  className="w-[130px] h-[130px]"
+                />
               </div>
               <div className="flex gap-2 mt-3">
                 <button className="p-2 border border-gray-300 dark:border-gray-600 rounded-full hover:bg-gray-100 dark:hover:bg-gray-900 transition">
@@ -466,9 +471,12 @@ function CommentCard({ comment, postId }: { comment: any; postId: number }) {
             e.stopPropagation();
             router.push(`/profile/${comment.author}`);
           }}
-          className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 hover:opacity-90"
         >
-          {comment.author.slice(2, 4).toUpperCase()}
+          <UserAvatar 
+            address={comment.author as `0x${string}`}
+            size="lg"
+            showVerified={true}
+          />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1">

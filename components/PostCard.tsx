@@ -10,6 +10,7 @@ import { useBookmark } from '@/hooks/useBookmark';
 import QuotePostModal from './QuotePostModal';
 import EditPostModal from './EditPostModal';
 import TextWithHashtags from './TextWithHashtags';
+import UserAvatar from './UserAvatar';
 import { Heart, MessageCircle, Quote, Share, MoreHorizontal, Loader2, Bookmark, Edit, Link2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -182,11 +183,13 @@ export default function PostCard({
         className="px-4 py-3 border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900/30 transition cursor-pointer"
       >
         <div className="flex gap-3">
-          <div 
-            onClick={handleProfileClick}
-            className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 hover:opacity-90 transition"
-          >
-            {author.slice(2, 4).toUpperCase()}
+          {/* Use UserAvatar component instead of div */}
+          <div onClick={handleProfileClick} className="cursor-pointer">
+            <UserAvatar 
+              address={author as `0x${string}`} 
+              size="lg"
+              showVerified={true}
+            />
           </div>
 
           <div className="flex-1 min-w-0">
@@ -393,9 +396,11 @@ function QuotedPostPreview({ post }: { post: any }) {
   return (
     <div className="mt-3 border border-gray-200 dark:border-gray-700 rounded-2xl p-3 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
       <div className="flex gap-2 mb-2">
-        <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-          {post.author?.slice(2, 4).toUpperCase()}
-        </div>
+        <UserAvatar 
+          address={post.author as `0x${string}`}
+          size="sm"
+          showVerified={true}
+        />
         <div>
           <span className="font-bold text-sm text-gray-900 dark:text-white">
             {username}
