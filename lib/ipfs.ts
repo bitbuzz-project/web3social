@@ -86,26 +86,51 @@ export async function getFromIPFS(hash: string): Promise<string> {
   }
 }
 
-export function extractImageFromContent(content: string): string | null {
-  // Extract image URL from markdown or HTML content
+export function extractImageFromContent(content: string): { text: string; imageUrl: string | null } {
+  // Check for [IMAGE]url[/IMAGE] format
+  const imageMatch = content.match(/\[IMAGE\](.*?)\[\/IMAGE\]/);
+  
+  if (imageMatch) {
+    // Remove the image tag from content
+    const text = content.replace(/\[IMAGE\].*?\[\/IMAGE\]/g, '').trim();
+    return {
+      text,
+      imageUrl: imageMatch[1]
+    };
+  }
   
   // Match markdown image: ![alt](url)
   const markdownMatch = content.match(/!\[.*?\]\((.*?)\)/);
   if (markdownMatch) {
-    return markdownMatch[1];
+    const text = content.replace(/!\[.*?\]\(.*?\)/g, '').trim();
+    return {
+      text,
+      imageUrl: markdownMatch[1]
+    };
   }
   
   // Match HTML img tag: <img src="url" />
   const htmlMatch = content.match(/<img[^>]+src="([^">]+)"/);
   if (htmlMatch) {
-    return htmlMatch[1];
+    const text = content.replace(/<img[^>]*>/g, '').trim();
+    return {
+      text,
+      imageUrl: htmlMatch[1]
+    };
   }
   
   // Match plain URL that looks like an image
   const urlMatch = content.match(/https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp)/i);
   if (urlMatch) {
-    return urlMatch[0];
+    const text = content.replace(urlMatch[0], '').trim();
+    return {
+      text,
+      imageUrl: urlMatch[0]
+    };
   }
   
-  return null;
+  return {
+    text: content,
+    imageUrl: null
+  };
 }
