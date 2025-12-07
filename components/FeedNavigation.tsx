@@ -20,7 +20,8 @@ import {
   MoreHorizontal, 
   LogOut, 
   Link2, 
-  Plus 
+  Plus, 
+  Briefcase
 } from 'lucide-react';
 
 interface FeedNavigationProps {
@@ -66,6 +67,8 @@ export default function FeedNavigation({ onThreadClick }: FeedNavigationProps) {
     { name: 'Communities', icon: Users, href: '/communities', badge: null },
     { name: 'Profile', icon: User, href: '/profile', badge: null },
     { name: 'Wallet', icon: Wallet, href: '/wallet', badge: null },
+    { name: 'Portfolio', icon: Briefcase, href: '/portfolio', badge: null },
+
   ];
 
   const username = profile?.username || `user_${address?.slice(-4)}`;

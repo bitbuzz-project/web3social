@@ -4,10 +4,13 @@ import { useReadContract } from 'wagmi';
 import { SOCIAL_MEDIA_CONTRACT } from '@/lib/contract';
 import PostCard from './PostCard';
 import { Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getFromIPFS } from '@/lib/ipfs';
 
-export default function FeedList() {
+export default function FeedList({ searchQuery = '' }: { searchQuery?: string }) {
   const [visiblePosts, setVisiblePosts] = useState(10);
+  const [filteredPosts, setFilteredPosts] = useState<number[]>([]);
+  const [allPosts, setAllPosts] = useState<number[]>([]);
 
   const { data: postCount, isLoading: countLoading } = useReadContract({
     address: SOCIAL_MEDIA_CONTRACT.address,
@@ -16,10 +19,49 @@ export default function FeedList() {
   });
 
   const totalPosts = postCount ? Number(postCount) : 0;
-  const postsToShow = Math.min(visiblePosts, totalPosts);
+
+  // Generate all post IDs
+  useEffect(() => {
+    if (totalPosts > 0) {
+      const posts = Array.from({ length: totalPosts }, (_, i) => totalPosts - i);
+      setAllPosts(posts);
+      setFilteredPosts(posts);
+    }
+  }, [totalPosts]);
+
+  // Filter posts based on search
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredPosts(allPosts);
+      return;
+    }
+
+    async function filterPosts() {
+      const matches: number[] = [];
+      const query = searchQuery.toLowerCase();
+
+      for (const postId of allPosts.slice(0, 50)) { // Search first 50 posts
+        try {
+          const post: any = await fetch(`/api/search-post?id=${postId}&query=${query}`).then(r => r.json());
+          if (post.matches) {
+            matches.push(postId);
+          }
+        } catch (e) {
+          // Skip errors
+        }
+      }
+
+      setFilteredPosts(matches);
+    }
+
+    const debounce = setTimeout(filterPosts, 500);
+    return () => clearTimeout(debounce);
+  }, [searchQuery, allPosts]);
+
+  const postsToShow = Math.min(visiblePosts, filteredPosts.length);
 
   const loadMore = () => {
-    setVisiblePosts(prev => Math.min(prev + 10, totalPosts));
+    setVisiblePosts(prev => Math.min(prev + 10, filteredPosts.length));
   };
 
   if (countLoading) {
@@ -41,13 +83,24 @@ export default function FeedList() {
     );
   }
 
+  if (searchQuery && filteredPosts.length === 0) {
+    return (
+      <div className="p-12 text-center">
+        <div className="text-gray-500 dark:text-gray-400">
+          <p className="text-lg font-semibold mb-2">No results found</p>
+          <p className="text-sm">Try a different search term</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
-      {Array.from({ length: postsToShow }, (_, i) => totalPosts - i).map((postId) => (
+      {filteredPosts.slice(0, postsToShow).map((postId) => (
         <PostItem key={postId} postId={postId} />
       ))}
       
-      {visiblePosts < totalPosts && (
+      {visiblePosts < filteredPosts.length && (
         <div className="p-4 border-b border-gray-200 dark:border-gray-800">
           <button
             onClick={loadMore}

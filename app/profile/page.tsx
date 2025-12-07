@@ -1,6 +1,6 @@
 'use client';
 
-import { useAccount, useReadContract } from 'wagmi';
+import { useAccount, useReadContract, usePublicClient } from 'wagmi';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { SOCIAL_MEDIA_CONTRACT } from '@/lib/contract';
@@ -8,16 +8,21 @@ import EditProfileModal from '@/components/EditProfileModal';
 import FeedNavigation from '@/components/FeedNavigation';
 import PostCard from '@/components/PostCard';
 import UserAvatar from '@/components/UserAvatar';
-import { ArrowLeft, Calendar, LinkIcon, MapPin, MoreHorizontal, Loader2 } from 'lucide-react';
+import { ArrowLeft, Calendar, LinkIcon, MapPin, MoreHorizontal, Loader2, DollarSign, TrendingUp } from 'lucide-react';
 import { getFromIPFS } from '@/lib/ipfs';
 import { formatDistanceToNow } from 'date-fns';
 import TextWithHashtags from '@/components/TextWithHashtags';
+import { formatUnits } from 'viem';
 
 export default function ProfilePage() {
   const { address, isConnected } = useAccount();
   const router = useRouter();
+  const publicClient = usePublicClient();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('posts');
+  const [ethBalance, setEthBalance] = useState('0');
+  const [ethPrice, setEthPrice] = useState(0);
+  const [portfolioValue, setPortfolioValue] = useState(0);
 
   const { data: profile } = useReadContract({
     address: SOCIAL_MEDIA_CONTRACT.address,
@@ -38,6 +43,37 @@ export default function ProfilePage() {
     }
   }, [isConnected, router]);
 
+  useEffect(() => {
+    async function fetchEthBalance() {
+      if (!address || !publicClient) return;
+      try {
+        const balance = await publicClient.getBalance({ address });
+        setEthBalance(formatUnits(balance, 18));
+      } catch (error) {
+        console.error('Error fetching ETH balance:', error);
+      }
+    }
+    fetchEthBalance();
+  }, [address, publicClient]);
+
+  useEffect(() => {
+    async function fetchEthPrice() {
+      try {
+        const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
+        const data = await response.json();
+        setEthPrice(data.ethereum.usd);
+      } catch (error) {
+        console.error('Error fetching ETH price:', error);
+      }
+    }
+    fetchEthPrice();
+  }, []);
+
+  useEffect(() => {
+    const value = parseFloat(ethBalance) * ethPrice;
+    setPortfolioValue(value);
+  }, [ethBalance, ethPrice]);
+
   if (!isConnected) {
     return null;
   }
@@ -56,16 +92,13 @@ export default function ProfilePage() {
 
   return (
     <div className="flex min-h-screen bg-white dark:bg-black">
-      {/* Left Sidebar */}
       <div className="w-[68px] xl:w-[275px] flex-shrink-0 border-r border-gray-200 dark:border-gray-800">
         <div className="fixed w-[68px] xl:w-[275px] h-screen">
           <FeedNavigation />
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="flex-1 max-w-[600px] border-r border-gray-200 dark:border-gray-800">
-        {/* Header */}
         <div className="sticky top-0 z-10 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
           <div className="flex items-center gap-8 px-4 py-2">
             <button 
@@ -83,14 +116,10 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Profile Header */}
         <div>
-          {/* Cover Image */}
           <div className="h-[200px] bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
           
-          {/* Profile Info */}
           <div className="px-4 pb-4">
-            {/* Avatar & Edit Button */}
             <div className="flex justify-between items-start -mt-16 mb-4">
               <div className="border-4 border-white dark:border-black rounded-full">
                 <UserAvatar 
@@ -112,7 +141,6 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Name & Username */}
             <div className="mb-3">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">{username}</h2>
               <p className="text-gray-500 dark:text-gray-400">
@@ -120,10 +148,32 @@ export default function ProfilePage() {
               </p>
             </div>
 
-            {/* Bio */}
             <p className="text-gray-900 dark:text-white mb-3">{bio}</p>
 
-            {/* Metadata */}
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-1 flex items-center gap-1">
+                    <DollarSign size={16} />
+                    Portfolio Value
+                  </div>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                    ${portfolioValue.toFixed(2)}
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {parseFloat(ethBalance).toFixed(4)} ETH
+                  </div>
+                </div>
+                <button
+                  onClick={() => router.push('/portfolio')}
+                  className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition text-sm font-semibold"
+                >
+                  <TrendingUp size={16} />
+                  View Portfolio
+                </button>
+              </div>
+            </div>
+
             <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400 mb-3">
               <div className="flex items-center gap-1">
                 <MapPin size={16} />
@@ -139,7 +189,6 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Following/Followers */}
             <div className="flex gap-5 text-sm">
               <button className="hover:underline">
                 <span className="font-bold text-gray-900 dark:text-white">{followingCount}</span>
@@ -152,7 +201,6 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Tabs */}
           <div className="border-b border-gray-200 dark:border-gray-800">
             <div className="flex">
               {tabs.map((tab) => (
@@ -174,7 +222,6 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Tab Content */}
           <div className="min-h-[400px]">
             {activeTab === 'posts' && (
               <UserPostsList userAddress={address as string} />
@@ -204,7 +251,6 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Right Sidebar */}
       <div className="hidden xl:block w-[350px] flex-shrink-0">
         <div className="fixed w-[350px] h-screen p-4">
           <div className="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
@@ -232,7 +278,6 @@ export default function ProfilePage() {
   );
 }
 
-// Component to count user's posts
 function UserPostCount({ userAddress }: { userAddress: string }) {
   const { data: postCount } = useReadContract({
     address: SOCIAL_MEDIA_CONTRACT.address,
@@ -262,7 +307,6 @@ function UserPostCount({ userAddress }: { userAddress: string }) {
   return <>{count} posts</>;
 }
 
-// Component to display user's posts
 function UserPostsList({ userAddress }: { userAddress: string }) {
   const { data: postCount } = useReadContract({
     address: SOCIAL_MEDIA_CONTRACT.address,
@@ -326,7 +370,6 @@ function UserPostsList({ userAddress }: { userAddress: string }) {
   );
 }
 
-// Component to render individual post if it belongs to user
 function UserPostItem({ postId, userAddress }: { postId: number; userAddress: string }) {
   const { data: post, isLoading } = useReadContract({
     address: SOCIAL_MEDIA_CONTRACT.address,
@@ -352,7 +395,6 @@ function UserPostItem({ postId, userAddress }: { postId: number; userAddress: st
   );
 }
 
-// Component to display user's replies (comments)
 function UserRepliesList({ userAddress }: { userAddress: string }) {
   const { data: postCount } = useReadContract({
     address: SOCIAL_MEDIA_CONTRACT.address,
@@ -416,7 +458,6 @@ function UserRepliesList({ userAddress }: { userAddress: string }) {
   );
 }
 
-// Component to render user's comments
 function UserReplyItem({ postId, userAddress }: { postId: number; userAddress: string }) {
   const { data: comments } = useReadContract({
     address: SOCIAL_MEDIA_CONTRACT.address,
@@ -442,7 +483,6 @@ function UserReplyItem({ postId, userAddress }: { postId: number; userAddress: s
   );
 }
 
-// Component to display a single comment
 function CommentCard({ comment, postId }: { comment: any; postId: number }) {
   const [content, setContent] = useState('Loading...');
   const router = useRouter();
@@ -509,7 +549,6 @@ function CommentCard({ comment, postId }: { comment: any; postId: number }) {
   );
 }
 
-// Component to display user's liked posts
 function UserLikesList({ userAddress }: { userAddress: string }) {
   const { data: postCount } = useReadContract({
     address: SOCIAL_MEDIA_CONTRACT.address,
@@ -573,7 +612,6 @@ function UserLikesList({ userAddress }: { userAddress: string }) {
   );
 }
 
-// Component to render liked post
 function UserLikedPostItem({ postId, userAddress }: { postId: number; userAddress: string }) {
   const { data: hasLiked } = useReadContract({
     address: SOCIAL_MEDIA_CONTRACT.address,
