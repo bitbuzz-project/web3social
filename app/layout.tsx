@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+import ErrorBoundary from '@/components/ErrorBoundary';
+import { ToastProvider } from '@/components/ToastProvider';
+import '@/styles/animations.css';
+import '@/styles/mobile.css';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -44,11 +48,15 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${inter.className} bg-white dark:bg-black text-gray-900 dark:text-white`} suppressHydrationWarning>
-        <Providers>
-          {children}
-        </Providers>
-      </body>
+<body className={`${inter.className} bg-white dark:bg-black`}>
+  <ErrorBoundary>
+    <Providers>
+      <ToastProvider>
+        {children}
+      </ToastProvider>
+    </Providers>
+  </ErrorBoundary>
+</body>
     </html>
   );
 }

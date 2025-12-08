@@ -7,7 +7,7 @@ import { SOCIAL_MEDIA_CONTRACT } from '@/lib/contract';
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { X, Loader2, Image as ImageIcon, Smile, MapPin, BarChart3 } from 'lucide-react';
 import dynamic from 'next/dynamic';
-
+import { useToast } from './ToastProvider';
 const EmojiPicker = dynamic(() => import('emoji-picker-react'), { ssr: false });
 
 interface CreatePostModalProps {
@@ -21,26 +21,27 @@ export default function CreatePostModal({ isOpen, onClose }: CreatePostModalProp
   const [imagePreview, setImagePreview] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const { address } = useAccount();
-
+  const toast = useToast();
   const { data: hash, writeContract, isPending, reset } = useWriteContract();
   
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
 
-  useEffect(() => {
-    if (isSuccess) {
-      setTimeout(() => {
-        setContent('');
-        setImageUrl('');
-        setImagePreview('');
-        setShowEmojiPicker(false);
-        reset();
-        onClose();
-        window.location.reload();
-      }, 1500);
-    }
-  }, [isSuccess, onClose, reset]);
+useEffect(() => {
+  if (isSuccess) {
+    toast.success('Post published successfully!');
+    setTimeout(() => {
+      setContent('');
+      setImageUrl('');
+      setImagePreview('');
+      setShowEmojiPicker(false);
+      reset();
+      onClose();
+      window.location.reload();
+    }, 1500);
+  }
+}, [isSuccess, onClose, reset, toast]);
 
   useEffect(() => {
     if (isOpen) {
@@ -70,34 +71,28 @@ export default function CreatePostModal({ isOpen, onClose }: CreatePostModalProp
   };
 
   const handlePost = async () => {
-    if (!content.trim() && !imageUrl.trim()) return;
+    if (!content.trim() && !imageUrl.trim()) {
+      toast.error('Please enter some content or add an image');
+      return;
+    }
 
     try {
-      // Create post content with optional image
       const postContent = imageUrl.trim() 
         ? `${content}\n\n[IMAGE]${imageUrl}[/IMAGE]`
         : content;
       
       const hash = await uploadToIPFS(postContent);
-      
-      // Detect mentions
       const mentions = detectMentions(content);
 
-      // Call createPost with new parameters
-      // createPost(contentHash, quotedPostId, mentions[])
       writeContract({
         address: SOCIAL_MEDIA_CONTRACT.address,
         abi: SOCIAL_MEDIA_CONTRACT.abi,
         functionName: 'createPost',
-        args: [
-          hash,           // contentHash
-          0n,             // quotedPostId (0 = not a quote)
-          mentions as `0x${string}`[]  // mentions array
-        ],
+        args: [hash, 0n, mentions as `0x${string}`[]],
       });
     } catch (error) {
       console.error('Error creating post:', error);
-      alert('Failed to create post');
+      toast.error('Failed to create post. Please try again.');
     }
   };
 

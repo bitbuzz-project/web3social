@@ -16,6 +16,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { TIP_CONTRACT } from '@/lib/tipContract';
 import { formatUnits } from 'viem';
 import TipModal from './TipModal';
+import { useToast } from './ToastProvider';
 
 interface PostCardProps {
   postId: number;
@@ -47,7 +48,7 @@ export default function PostCard({
   const router = useRouter();
   const { likePost, unlikePost, isLoading: likeLoading } = useLikePost();
   const { bookmarkPost, unbookmarkPost, isLoading: bookmarkLoading } = useBookmark();
-
+  const toast = useToast();
   const isOwnPost = address?.toLowerCase() === author.toLowerCase();
   
   // Get full post data
@@ -128,23 +129,37 @@ export default function PostCard({
 
   const handleLikeToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (hasLiked) {
-      unlikePost(postId);
-    } else {
-      likePost(postId);
+    
+    try {
+      if (hasLiked) {
+        unlikePost(postId);
+        toast.info('Like removed');
+      } else {
+        likePost(postId);
+        toast.success('Post liked!');
+      }
+      setTimeout(() => refetchLike(), 2000);
+    } catch (error) {
+      toast.error('Failed to update like. Please try again.');
     }
-    setTimeout(() => refetchLike(), 2000);
   };
 
-  const handleBookmarkToggle = (e: React.MouseEvent) => {
-    e.stopPropagation();
+const handleBookmarkToggle = (e: React.MouseEvent) => {
+  e.stopPropagation();
+  
+  try {
     if (hasBookmarked) {
       unbookmarkPost(postId);
+      toast.info('Bookmark removed');
     } else {
       bookmarkPost(postId);
+      toast.success('Post bookmarked!');
     }
     setTimeout(() => refetchBookmark(), 2000);
-  };
+  } catch (error) {
+    toast.error('Failed to update bookmark. Please try again.');
+  }
+};
 
   const handleProfileClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -170,12 +185,13 @@ export default function PostCard({
     setShowMoreMenu(false);
   };
 
-  const handleCopyLink = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const url = `${window.location.origin}/post/${postId}`;
-    navigator.clipboard.writeText(url);
-    setShowMoreMenu(false);
-  };
+const handleCopyLink = (e: React.MouseEvent) => {
+  e.stopPropagation();
+  const url = `${window.location.origin}/post/${postId}`;
+  navigator.clipboard.writeText(url);
+  toast.success('Link copied to clipboard!');
+  setShowMoreMenu(false);
+};
 
   const username = profile?.username || `user_${author?.slice(-4)}`;
   const totalComments = commentCount ? Number(commentCount) : 0;

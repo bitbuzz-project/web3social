@@ -6,6 +6,8 @@ import PostCard from './PostCard';
 import { Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { getFromIPFS } from '@/lib/ipfs';
+import { FeedSkeleton } from './Skeletons';
+import ErrorDisplay, { InlineError } from './ErrorDisplay';
 
 export default function FeedList({ searchQuery = '' }: { searchQuery?: string }) {
   const [visiblePosts, setVisiblePosts] = useState(10);
@@ -64,13 +66,9 @@ export default function FeedList({ searchQuery = '' }: { searchQuery?: string })
     setVisiblePosts(prev => Math.min(prev + 10, filteredPosts.length));
   };
 
-  if (countLoading) {
-    return (
-      <div className="flex justify-center items-center py-12">
-        <Loader2 className="animate-spin text-blue-500" size={32} />
-      </div>
-    );
-  }
+if (countLoading) {
+  return <FeedSkeleton count={10} />;
+}
 
   if (totalPosts === 0) {
     return (
@@ -122,6 +120,7 @@ function PostItem({ postId }: { postId: number }) {
     args: [BigInt(postId)],
   });
 
+  
   if (isLoading) {
     return (
       <div className="px-4 py-6 border-b border-gray-200 dark:border-gray-800">
@@ -136,7 +135,14 @@ function PostItem({ postId }: { postId: number }) {
       </div>
     );
   }
-
+  if (error) {
+  return (
+    <InlineError
+      message="Failed to load posts. Please try again."
+      onRetry={() => window.location.reload()}
+    />
+  );
+}
   if (!post || post.isDeleted) {
     return null;
   }
