@@ -48,15 +48,15 @@ export default function RootLayout({
           }}
         />
       </head>
-<body className={`${inter.className} bg-white dark:bg-black`}>
-  <ErrorBoundary>
-    <Providers>
-      <ToastProvider>
-        {children}
-      </ToastProvider>
-    </Providers>
-  </ErrorBoundary>
-</body>
+      <body className={`${inter.className} bg-white dark:bg-black`}>
+        <ErrorBoundary>
+          <Providers>
+            <ToastProvider>
+              {children}
+            </ToastProvider>
+          </Providers>
+        </ErrorBoundary>
+      </body>
     </html>
   );
 }

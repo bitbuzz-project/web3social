@@ -10,6 +10,8 @@ import RewardRates from '@/components/RewardRates';
 import FeedNavigation from '@/components/FeedNavigation';
 import FollowUser from '@/components/FollowUser';
 import ThreadComposer from '@/components/ThreadComposer';
+import MobileNav from '@/components/MobileNav';
+import MobileMenu from '@/components/MobileMenu';
 import { Sparkles, Search } from 'lucide-react';
 import TrendingHashtags from '@/components/TrendingHashtags';
 
@@ -17,13 +19,39 @@ export default function FeedPage() {
   const { isConnected } = useAccount();
   const router = useRouter();
   const [isThreadModalOpen, setIsThreadModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(''); // Add this
+  const [searchQuery, setSearchQuery] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration mismatch by only rendering after mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!isConnected) {
       router.push('/');
     }
   }, [isConnected, router]);
+
+  // Show loading skeleton on server-side and initial client render
+  if (!mounted) {
+    return (
+      <div className="flex min-h-screen bg-white dark:bg-black">
+        <div className="w-[68px] xl:w-[275px] flex-shrink-0 border-r border-gray-200 dark:border-gray-800"></div>
+        <div className="flex-1 max-w-[600px] border-r border-gray-200 dark:border-gray-800">
+          <div className="animate-pulse p-4">
+            <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded w-32 mb-4"></div>
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-32 bg-gray-200 dark:bg-gray-800 rounded"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="hidden lg:block w-[350px] p-4"></div>
+      </div>
+    );
+  }
 
   if (!isConnected) {
     return null;
@@ -40,14 +68,17 @@ export default function FeedPage() {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 max-w-[600px] border-r border-gray-200 dark:border-gray-800">
+        <div className="flex-1 max-w-[600px] border-r border-gray-200 dark:border-gray-800 pb-20 md:pb-0">
           {/* Header */}
           <div className="sticky top-0 z-10 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
             <div className="flex items-center justify-between px-4 py-3">
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">Home</h1>
-              <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-900 rounded-full transition">
-                <Sparkles size={20} className="text-blue-500" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-900 rounded-full transition">
+                  <Sparkles size={20} className="text-blue-500" />
+                </button>
+                <MobileMenu />
+              </div>
             </div>
             
             {/* Tabs */}
@@ -68,25 +99,24 @@ export default function FeedPage() {
 
           {/* Feed */}
           <FeedList searchQuery={searchQuery} />
-
         </div>
 
         {/* Right Sidebar */}
         <div className="hidden lg:flex w-[350px] flex-shrink-0">
           <div className="fixed w-[350px] h-screen flex flex-col">
             {/* Search Bar - Fixed at top */}
-         <div className="p-2">
-  <div className="relative">
-    <Search className="absolute left-4 top-3 text-gray-500" size={20} />
-   <input
-  type="text"
-  placeholder="Search posts..."
-  value={searchQuery}
-  onChange={(e) => setSearchQuery(e.target.value)}
-  className="w-full bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white rounded-full py-3 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-/>
-  </div>
-</div>
+            <div className="p-2">
+              <div className="relative">
+                <Search className="absolute left-4 top-3 text-gray-500" size={20} />
+                <input
+                  type="text"
+                  placeholder="Search posts..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white rounded-full py-3 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
 
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-4 scrollbar-hide">
@@ -97,8 +127,7 @@ export default function FeedPage() {
               <RewardRates />
 
               {/* Trends Widget */}
-            <TrendingHashtags />
-
+              <TrendingHashtags />
 
               {/* Who to Follow */}
               <div className="bg-gray-50 dark:bg-gray-900 rounded-2xl overflow-hidden">
@@ -130,6 +159,9 @@ export default function FeedPage() {
           </div>
         </div>
       </div>
+
+      {/* Mobile Navigation - Fixed at bottom on mobile */}
+      <MobileNav />
 
       {/* Thread Modal - Outside all containers */}
       <ThreadComposer isOpen={isThreadModalOpen} onClose={() => setIsThreadModalOpen(false)} />

@@ -3,18 +3,16 @@
 import { useReadContract } from 'wagmi';
 import { SOCIAL_MEDIA_CONTRACT } from '@/lib/contract';
 import PostCard from './PostCard';
-import { Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { getFromIPFS } from '@/lib/ipfs';
 import { FeedSkeleton } from './Skeletons';
-import ErrorDisplay, { InlineError } from './ErrorDisplay';
+import { InlineError } from './ErrorDisplay';
 
 export default function FeedList({ searchQuery = '' }: { searchQuery?: string }) {
   const [visiblePosts, setVisiblePosts] = useState(10);
   const [filteredPosts, setFilteredPosts] = useState<number[]>([]);
   const [allPosts, setAllPosts] = useState<number[]>([]);
 
-  const { data: postCount, isLoading: countLoading } = useReadContract({
+  const { data: postCount, isLoading: countLoading, error: countError, refetch: refetchCount } = useReadContract({
     address: SOCIAL_MEDIA_CONTRACT.address,
     abi: SOCIAL_MEDIA_CONTRACT.abi,
     functionName: 'postCount',
@@ -66,27 +64,48 @@ export default function FeedList({ searchQuery = '' }: { searchQuery?: string })
     setVisiblePosts(prev => Math.min(prev + 10, filteredPosts.length));
   };
 
-if (countLoading) {
-  return <FeedSkeleton count={10} />;
-}
+  // Loading state
+  if (countLoading) {
+    return <FeedSkeleton count={10} />;
+  }
 
+  // Error state
+  if (countError) {
+    return (
+      <InlineError
+        message="Failed to load posts. Please try again."
+        onRetry={() => refetchCount()}
+      />
+    );
+  }
+
+  // Empty state - no posts at all
   if (totalPosts === 0) {
     return (
-      <div className="p-12 text-center">
-        <div className="text-gray-500 dark:text-gray-400">
-          <p className="text-lg font-semibold mb-2">No posts yet</p>
-          <p className="text-sm">Be the first to share something!</p>
+      <div className="flex flex-col items-center justify-center py-16 px-4">
+        <div className="text-center">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+            No posts yet
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            Be the first to share something!
+          </p>
         </div>
       </div>
     );
   }
 
+  // Empty state - search returned nothing
   if (searchQuery && filteredPosts.length === 0) {
     return (
-      <div className="p-12 text-center">
-        <div className="text-gray-500 dark:text-gray-400">
-          <p className="text-lg font-semibold mb-2">No results found</p>
-          <p className="text-sm">Try a different search term</p>
+      <div className="flex flex-col items-center justify-center py-16 px-4">
+        <div className="text-center">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+            No results found
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            Try a different search term
+          </p>
         </div>
       </div>
     );
@@ -112,37 +131,31 @@ if (countLoading) {
   );
 }
 
+// Separate component for each post to handle individual errors
 function PostItem({ postId }: { postId: number }) {
-  const { data: post, isLoading } = useReadContract({
+  const { 
+    data: post, 
+    isLoading,
+    error: postError 
+  } = useReadContract({
     address: SOCIAL_MEDIA_CONTRACT.address,
     abi: SOCIAL_MEDIA_CONTRACT.abi,
     functionName: 'getPost',
     args: [BigInt(postId)],
   });
 
-  
+  // Don't render anything while loading
   if (isLoading) {
-    return (
-      <div className="px-4 py-6 border-b border-gray-200 dark:border-gray-800">
-        <div className="flex gap-3 animate-pulse">
-          <div className="w-12 h-12 bg-gray-200 dark:bg-gray-800 rounded-full flex-shrink-0" />
-          <div className="flex-1">
-            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-1/4 mb-2" />
-            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-3/4 mb-2" />
-            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-1/2" />
-          </div>
-        </div>
-      </div>
-    );
+    return null;
   }
-  if (error) {
-  return (
-    <InlineError
-      message="Failed to load posts. Please try again."
-      onRetry={() => window.location.reload()}
-    />
-  );
-}
+
+  // Skip rendering if there's an error (but don't break the whole feed)
+  if (postError) {
+    console.error(`Error loading post ${postId}:`, postError);
+    return null;
+  }
+
+  // Skip if post doesn't exist or is deleted
   if (!post || post.isDeleted) {
     return null;
   }
@@ -154,6 +167,8 @@ function PostItem({ postId }: { postId: number }) {
       contentHash={post.contentHash}
       timestamp={Number(post.timestamp)}
       likes={Number(post.likes)}
+      shares={Number(post.shares)}
+      quotedPostId={Number(post.quotedPostId)}
     />
   );
 }
